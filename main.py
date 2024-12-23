@@ -8,11 +8,10 @@ import sys
 try:
     conn = mariadb.connect(
         user="",
-        password=os.getenv('DB_PASSWD'),
+        password="",
         host="192.168.178.0",
         port=3306,
         database=""
-
     )
 except mariadb.Error as e:
     print(f"Error connecting to MariaDB Platform: {e}")
@@ -60,7 +59,7 @@ async def on_ready():
 async def ping(ctx: discord.ApplicationContext):
     await ctx.respond("pong")
 
-@bot.slash_command(name="warn", guild_ids=[1256897662309892156])
+@bot.slash_command(name="warn")
 @discord.default_permissions(
     administrator=True,
 )
@@ -91,7 +90,7 @@ async def warn(ctx: discord.ApplicationContext, user, reason: str):
         print(f"Error: {e}")
         await ctx.respond("and error occured, pls contact Jon1Games")
 
-@bot.slash_command(name="list_warns", guild_ids=[1256897662309892156])
+@bot.slash_command(name="list_warns")
 @discord.default_permissions(
     administrator=True,
 )
@@ -135,7 +134,7 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
 
     await msg.edit(embed=embed)
 
-@bot.slash_command(name="remove_warn", guild_ids=[1256897662309892156])
+@bot.slash_command(name="remove_warn")
 @discord.default_permissions(
     administrator=True,
 )
