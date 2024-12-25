@@ -4,8 +4,9 @@ from dotenv import load_dotenv
 import mariadb
 import sys
 from datetime import datetime, timedelta, date
+import threading
+import asyncio
 from discord.ext import tasks
-import time
 
 intents = discord.Intents.default()
 intents.members = True
@@ -231,34 +232,5 @@ async def remove_warn(ctx: discord.ApplicationContext, warn_id):
     except mariadb.Error as e: 
         print(f"Error: {e}")
         await ctx.respond("and error occured, pls contact Jon1Games")
-
-@bot.slash_command(name="clear")
-@discord.default_permissions(
-    administrator=True,
-)
-@discord.option(
-    "count", 
-    required=True,
-    default=1
-)
-async def remove_warn(ctx: discord.ApplicationContext, count):
-    wait_embed = discord.Embed(title=f"__**Deleting {str(count)} messages...**__", color=0x03f8fc)
-    msg = await ctx.respond(embed=wait_embed)
-
-    time.sleep(3)
-
-    channel = ctx.channel
-    messages = await channel.history(limit=int(count) + 1).flatten()
-    for a in messages:
-        await a.delete()
-
-    embed = discord.Embed(title=f"__**Removed {str(count)} messages.**__", color=0x03f8fc)
-
-    msg = await ctx.send(embed=embed)
-
-    time.sleep(5)
-
-    await msg.delete()
-
 
 bot.run(os.getenv('TOKEN'))
