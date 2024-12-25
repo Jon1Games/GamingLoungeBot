@@ -156,7 +156,8 @@ async def warn(ctx: discord.ApplicationContext, user, reason: str, hours: int, d
         conn.close()
     except mariadb.Error as e: 
         print(f"Error: {e}")
-        await ctx.respond("and error occured, pls contact Jon1Games")
+        embed = discord.Embed(title=f"__**EIn Fehler ist aufgetreten, bitte Kontaktiere Jon1Games*__", color=0xFF0000)
+        msg = await ctx.respond(embed=embed)
 
 @bot.slash_command(name="list_warns")
 @discord.default_permissions(
@@ -245,6 +246,7 @@ async def remove_warn(ctx: discord.ApplicationContext, warn_id):
         conn.close()
     except mariadb.Error as e: 
         print(f"Error: {e}")
-        await ctx.respond("and error occured, pls contact Jon1Games")
+        embed = discord.Embed(title=f"__**EIn Fehler ist aufgetreten, bitte Kontaktiere Jon1Games*__", color=0xFF0000)
+        msg = await ctx.respond(embed=embed)
 
 bot.run(os.getenv('TOKEN'))
