@@ -150,14 +150,22 @@ async def warn(ctx: discord.ApplicationContext, user, reason: str, hours: int, d
         cur = conn.cursor()
         cur.execute("INSERT INTO `warnings` (`guild`,`user`,`mod`,`reason`, `exipire`) VALUES (?, ?, ?, ?, ?)", (ctx.guild_id, user.id, ctx.author.id, reason, time)) 
         conn.commit()
-        await ctx.respond("User " + user.name + " warned succesfully.")
+
+        embed = discord.Embed(title=f"__**Der Nutzer {user.name} wurde erfolgreicht Verwarnt.**__", color=0xAAFF00)
+        if time == None:
+            embed.add_field(name=f'**Informationen:**', value=f'> Reason: {reason}\n> Auslauf Datum:',inline=False)
+        else:
+            time = str(time)
+            embed.add_field(name=f'**Informationen:**', value=f'> Reason: {reason}\n> Auslauf Datum: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
+
+        await ctx.respond(embed=embed)
 
         await warningRoles(ctx.guild, user, cur)
         conn.close()
     except mariadb.Error as e: 
         print(f"Error: {e}")
         embed = discord.Embed(title=f"__**EIn Fehler ist aufgetreten, bitte Kontaktiere Jon1Games*__", color=0xFF0000)
-        msg = await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
 
 @bot.slash_command(name="list_warns")
 @discord.default_permissions(
@@ -240,13 +248,14 @@ async def remove_warn(ctx: discord.ApplicationContext, warn_id):
             u = u[0]
         cur.execute("DELETE FROM `warnings` WHERE `id` = ? AND `guild` = ?;", (warn_id,ctx.guild_id)) 
         conn.commit()
-        await ctx.respond("The warning with the ID " + warn_id + " was removed.")
+        embed = discord.Embed(title=f"__**Die Verwarnung mit der ID {warn_id} wurde entfernt**__", color=0xAAFF00)
+        await ctx.respond(embed=embed)
 
         await warningRoles(ctx.guild, u, cur)
         conn.close()
     except mariadb.Error as e: 
         print(f"Error: {e}")
         embed = discord.Embed(title=f"__**EIn Fehler ist aufgetreten, bitte Kontaktiere Jon1Games*__", color=0xFF0000)
-        msg = await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed)
 
 bot.run(os.getenv('TOKEN'))
