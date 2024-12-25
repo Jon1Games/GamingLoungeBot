@@ -246,7 +246,7 @@ async def remove_warn(ctx: discord.ApplicationContext, warn_id):
         for user,mod in cur:
             u = await ctx.guild.query_members(user_ids=[user]) 
             u = u[0]
-        cur.execute("DELETE FROM `warnings` WHERE `id` = ? AND `guild` = ?;", (warn_id,ctx.guild_id)) 
+        cur.execute("UPDATE `warnings` SET `exipire` = ? WHERE `id` = ? AND `guild` = ?;", (0,warn_id,ctx.guild_id)) 
         conn.commit()
         embed = discord.Embed(title=f"__**Die Verwarnung mit der ID {warn_id} wurde entfernt**__", color=0xAAFF00)
         await ctx.respond(embed=embed)
