@@ -71,7 +71,6 @@ async def warningRoles(guild: discord.Guild, user: discord.User, cur):
     else:
         await user.add_roles(role)
 
-    print(str(all_warnings))
     for a in range(1, all_warnings):
         if discord.utils.get(guild.roles, name="warnings: " + str(a)):
             role = discord.utils.get(guild.roles, name="warnings: " + str(a))
