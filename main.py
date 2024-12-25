@@ -71,7 +71,6 @@ async def warningRoles(guild: discord.Guild, user: discord.User, cur):
     else:
         await user.add_roles(role)
 
-    print(str(all_warnings))
     for a in range(1, all_warnings):
         if discord.utils.get(guild.roles, name="warnings: " + str(a)):
             role = discord.utils.get(guild.roles, name="warnings: " + str(a))
@@ -151,13 +150,22 @@ async def warn(ctx: discord.ApplicationContext, user, reason: str, hours: int, d
         cur = conn.cursor()
         cur.execute("INSERT INTO `warnings` (`guild`,`user`,`mod`,`reason`, `exipire`) VALUES (?, ?, ?, ?, ?)", (ctx.guild_id, user.id, ctx.author.id, reason, time)) 
         conn.commit()
-        await ctx.respond("User " + user.name + " warned succesfully.")
+
+        embed = discord.Embed(title=f"__**Der Nutzer {user.name} wurde erfolgreicht Verwarnt.**__", color=0xAAFF00)
+        if time == None:
+            embed.add_field(name=f'**Informationen:**', value=f'> Nutzer: {user.mention}\n> Grund: {reason}\n> Auslauf Datum:',inline=False)
+        else:
+            time = str(time)
+            embed.add_field(name=f'**Informationen:**', value=f'> Nutzer: {user.mention}\n> Grund: {reason}\n> Auslauf Datum: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
+
+        await ctx.respond(embed=embed)
 
         await warningRoles(ctx.guild, user, cur)
         conn.close()
     except mariadb.Error as e: 
         print(f"Error: {e}")
-        await ctx.respond("and error occured, pls contact Jon1Games")
+        embed = discord.Embed(title=f"__**EIn Fehler ist aufgetreten, bitte Kontaktiere Jon1Games*__", color=0xFF0000)
+        await ctx.respond(embed=embed)
 
 @bot.slash_command(name="list_warns")
 @discord.default_permissions(
@@ -207,16 +215,17 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
             if guildmode:
                 if exipire == None:
                     u = await bot.fetch_user(user)
-                    embed.add_field(name=f'**ID: {id}**', value=f'> {u}\n> Moderator: {n}\n> Reason: {reason}',inline=False)
+                    embed.add_field(name=f'**ID: {id}**', value=f'> Nutzer: {u.mention}\n> Moderator: {n}\n> Grund: {reason}',inline=False)
                 else:
                     time = str(exipire)
-                    embed.add_field(name=f'**ID: {id}**', value=f'> {u}\n> Moderator: {n}\n> Reason: {reason}\n> Expire: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
+                    u = await bot.fetch_user(user)
+                    embed.add_field(name=f'**ID: {id}**', value=f'> Nutzer: {u.mention}\n> Moderator: {n}\n> Grund: {reason}\n> Auslauf Datum: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
             else:
                 if exipire == None:
-                    embed.add_field(name=f'**ID: {id}**', value=f'> Moderator: {n}\n> Reason: {reason}',inline=False)
+                    embed.add_field(name=f'**ID: {id}**', value=f'> Moderator: {n}\n> Grund: {reason}',inline=False)
                 else:
                     time = str(exipire)
-                    embed.add_field(name=f'**ID: {id}**', value=f'> Moderator: {n}\n> Reason: {reason}\n> Expire: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
+                    embed.add_field(name=f'**ID: {id}**', value=f'> Moderator: {n}\n> Grund: {reason}\n> Auslauf Datum: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
 
     await msg.edit(embed=embed)
 
@@ -238,14 +247,16 @@ async def remove_warn(ctx: discord.ApplicationContext, warn_id):
         for user,mod in cur:
             u = await ctx.guild.query_members(user_ids=[user]) 
             u = u[0]
-        cur.execute("DELETE FROM `warnings` WHERE `id` = ? AND `guild` = ?;", (warn_id,ctx.guild_id)) 
+        cur.execute("UPDATE `warnings` SET `exipire` = ? WHERE `id` = ? AND `guild` = ?;", (0,warn_id,ctx.guild_id)) 
         conn.commit()
-        await ctx.respond("The warning with the ID " + warn_id + " was removed.")
+        embed = discord.Embed(title=f"__**Die Verwarnung mit der ID {warn_id} wurde entfernt**__", color=0xAAFF00)
+        await ctx.respond(embed=embed)
 
         await warningRoles(ctx.guild, u, cur)
         conn.close()
     except mariadb.Error as e: 
         print(f"Error: {e}")
-        await ctx.respond("and error occured, pls contact Jon1Games")
+        embed = discord.Embed(title=f"__**EIn Fehler ist aufgetreten, bitte Kontaktiere Jon1Games*__", color=0xFF0000)
+        await ctx.respond(embed=embed)
 
 bot.run(os.getenv('TOKEN'))
