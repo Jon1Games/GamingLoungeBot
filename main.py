@@ -6,12 +6,16 @@ import sys
 from datetime import datetime, timedelta
 from discord.ext import tasks
 import json
+from threading import Timer
 from random import randrange, randint
+from typing import Union
 
+configEdit = True
 config = json.load("config.json")
 
 intents = discord.Intents.default()
 intents.members = True
+intents.message_content = True
 
 bot = discord.Bot(intents=intents)
 
@@ -432,5 +436,61 @@ async def disconnect(ctx: discord.ApplicationContext, user, reason):
         await user.timeout(duration, reason=reason)
         
     msg = ctx.respond(embed=embed, ephemeral=True)
+    
+@bot.slash_command(name="message remove", description="Löscht eine Nachricht durch ID")
+@discord.default_permissions(
+    administrator=True,
+)
+@discord.option(
+    "messageId",
+    required=True,
+    default=None
+)
+async def modMessageDeletion(ctx: discord.ApplicationContext, messageId):
+    if messageId is None:
+        embed = discord.Embed(title=f"__**Du must Eine Nachrichten ID angeben um diese nachricht zu löschen!**__", color=0xFF0000)
+        ctx.respond(embed=embed, ephemeral=True)
+    else:
+        message = ctx.fetch_message(messageId)
+        # embed =
+        if ctx.guild.id in bot.get_channel(config['modMessageDeletion']):
+            channel = bot.get_channel(config['modMessageDeletion'][ctx.guild.id])
+            modEmbed = discord.Embed(title=f"__**Der Nutzer {ctx.author.mention} hat eine nachricht gelöscht**__")
+            modEmbed.add_field(name=f'**Nutzer**', value=f'{message.author.mention}', inline=False)
+            modEmbed.add_field(name=f'**Inhalt**', value=f'{message.content}', inline=False)
+            channel.sendMessage(embed=modEmbed)
+        else: 
+            embed = discord.Embed(title=f"__**Es wurde kein Mod  Nachrichten lösch Log eingestellt, nutze /setup modMessageDeletion <channel>**__", color=0xAAFF00)
+        await ctx.respond(embed=embed, ephemeral=True)
+    
+@bot.slash_command(name="setup modMessageDeletion")
+@discord.default_permissions(
+    administrator=True,
+)
+@discord.option(
+    "channel",
+    Union[discord.TextChannel],
+    required=True,
+    default=None
+)
+async def setup_modMessageDeletion(ctx: discord.ApplicationContext, channel):
+    config.update({"modMessageDeletion":{ctx.guild.id:channel.id}})
+    embed = discord.Embed(name=f'__**Mod Nachrichten lösch Log**__', value=f'Neuer Kanal: {channel.mention}')
+    await ctx.respond(embed=embed, ephemeral=True)
+
+def saveConfig():
+    global configEdit, config
+    if configEdit:
+        configEdit = False
+        with open("configs/config.json", 'w') as json_file:
+            json.dump(dict, json_file, 
+                            indent=4,  
+                            separators=(',',': '))
+        configEdit = True
+    else:
+        print("coudn´t save config")
+
+Timer(300, saveConfig).start()
+
 
 bot.run(os.getenv('TOKEN'))
