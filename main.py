@@ -478,6 +478,85 @@ async def setup_modMessageDeletion(ctx: discord.ApplicationContext, channel):
     embed = discord.Embed(name=f'__**Mod Nachrichten lösch Log**__', value=f'Neuer Kanal: {channel.mention}')
     await ctx.respond(embed=embed, ephemeral=True)
 
+@bot.slash_command(name="setup changelog")
+@discord.default_permissions(
+    administrator=True,
+)
+@discord.option(
+    "channel",
+    Union[discord.TextChannel],
+    required=True,
+    default=None
+)
+async def setup_changelog(ctx: discord.ApplicationContext, channel):
+    config.update({"changelog":{ctx.guild.id:channel.id}})
+    embed = discord.Embed(name=f'__**Change Log**__', value=f'Neuer Kanal: {channel.mention}')
+    await ctx.respond(embed=embed, ephemeral=True)
+
+@staticmethod
+def addRemoveChange(self: discord.AutocompleteContext):
+    return ["add","remove","change"]
+
+@bot.slash_command(name="changelog add", description="Erweitert den Changelog")
+@discord.default_permissions(
+    administrator=True,
+)
+@discord.option(
+    "type",
+    addRemoveChange
+    required=True,
+    default=None
+)
+@discord.option(
+    "headline",
+    required=True,
+    default=None
+)
+@discord.option(
+    "content",
+    required=True,
+    description="seperated by \";\"",
+    default=None
+)
+async def changelog_add(ctx: discord.ApplicationContext, type, headline, content: str):
+    if type is not "add" or "remove" or "change" and headline is not None and content is not None:
+        pass
+    else:
+        if ctx.guild.id in bot.get_channel(config['modMessageDeletion']):
+            channel = bot.get_channel(config['changelog'][ctx.guild.id])
+            message = await channel.fetch_message(
+                channel.last_message_id)
+            
+            sendnew = None
+            now = datetime.now()
+            if message.created_at.strftime('%Y%m%d') is not now.strftime('%Y%m%d'):
+                sendnew = True
+                embed = discord.Embed(name=f'__**Change Log** {now.strftime('%d/%m/%Y')}:__')
+            else:
+                sendnew = False
+                embed = discord.Embed.from_data(message.embeds)
+            
+            if type is "add":
+                type = "<:green_plus:1249766272145690697>"
+            elif type is "remove":
+                type = "<:red_minus:1249766101068288101>"
+            elif type is "change":
+                type = "⚙️"
+                
+            content = content.replace(";", "\\n> ")
+        
+            embed.add_field(name=f'{type} {headline}', value=f'> {content}')
+            
+            if sendnew:
+                await channel.send(embed=embed)
+            else:
+                await message.edit(embed=embed)
+        else:
+            respondembed = discord.Embed(title=f"__**Es wurde kein Mod  Nachrichten lösch Log eingestellt, nutze /setup modMessageDeletion <channel>**__", color=0xAAFF00)
+        await ctx.respond(embed=respondembed, ephemeral=True)
+        
+        
+    
 def saveConfig():
     global configEdit, config
     if configEdit:
@@ -491,6 +570,5 @@ def saveConfig():
         print("coudn´t save config")
 
 Timer(300, saveConfig).start()
-
 
 bot.run(os.getenv('TOKEN'))
