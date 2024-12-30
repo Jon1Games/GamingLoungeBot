@@ -483,7 +483,7 @@ def saveConfig():
     if configEdit:
         configEdit = False
         with open("configs/config.json", 'w') as json_file:
-            json.dump(dict, json_file, 
+            json.dump(config, json_file, 
                             indent=4,  
                             separators=(',',': '))
         configEdit = True
