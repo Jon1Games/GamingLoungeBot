@@ -427,7 +427,7 @@ async def disconnect(ctx: discord.ApplicationContext, user, reason):
         embed = discord.Embed(title=f"__**Der Nutzer {user.mention} befindet sich nicht in einem Sprachkanal!**__", color=0xFF0000)
     else:
         duration = datetime.timedelta(seconds=1)
-        reason = f"/disconnect - by {user.mention} | GamingLoungeBot\n{reason}"
+        reason = f"/disconnect - by {ctx.author.mention} | GamingLoungeBot\n{reason}"
         embed = discord.Embed(title=f"__**Der Nutzer {user.mention} wurde aus seinem Sprachkanal geworfen.**__", color=0xAAFF00)
         await user.timeout(duration, reason=reason)
         
