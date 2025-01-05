@@ -170,7 +170,7 @@ async def warn(ctx: discord.ApplicationContext, user, reason: str, hours: int, d
 )
 async def list_warns(ctx: discord.ApplicationContext, user, page):
     await recalcRoleWarnCound()
-    wait_embed = discord.Embed(title=f"__**Generating Warning list ...**__", color=0x03f8fc)
+    wait_embed = discord.Embed(title=f"__**generiere Verwarnungs Liste ...**__", color=0x03f8fc)
     msg = await ctx.respond(embed=wait_embed)
     guildmode = False
     now = datetime.now()
