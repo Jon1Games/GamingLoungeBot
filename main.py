@@ -131,14 +131,19 @@ async def ping(ctx: discord.ApplicationContext):
     required=False,
     default='0'
 )
-async def warn(ctx: discord.ApplicationContext, user, reason: str, hours: int, days: int, weeks: int):
+@discord.option(
+    "months", 
+    required=False,
+    default='0'
+)
+async def warn(ctx: discord.ApplicationContext, user, reason: str, hours: int, days: int, weeks: int, months: int):
     try: 
         warns = getWarnings(ctx.guild_id, user.id)
-        if hours == "0" and days == "0" and weeks == "0":
+        if hours == "0" and days == "0" and weeks == "0" and months == "0":
             time = None
         else:
             now = datetime.now()
-            now = now + timedelta(hours=int(hours), days=int(days), weeks=int(weeks))
+            now = now + timedelta(hours=int(hours), days=int(days), weeks=int(weeks), months=int(months))
             time = int(now.strftime("%Y%m%d%H"))
         cur.execute("INSERT INTO `warnings` (`guild`,`user`,`mod`,`reason`, `exipire`) VALUES (?, ?, ?, ?, ?)", (ctx.guild_id, user.id, ctx.author.id, reason, time)) 
         conn.commit()
@@ -149,7 +154,7 @@ async def warn(ctx: discord.ApplicationContext, user, reason: str, hours: int, d
         print(f"Error: {e}")
         await ctx.respond("and error occured, pls contact Jon1Games")
 
-@bot.slash_command(name="list_warns")
+@bot.slash_command(name="warns_list")
 @discord.default_permissions(
     administrator=True,
 )
@@ -207,7 +212,7 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
 
     await msg.edit(embed=embed)
 
-@bot.slash_command(name="remove_warn")
+@bot.slash_command(name="warn_remove")
 @discord.default_permissions(
     administrator=True,
 )
@@ -216,7 +221,7 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
     required=True,
     default=''
 )
-async def remove_warn(ctx: discord.ApplicationContext, warn_id):
+async def warn_remove(ctx: discord.ApplicationContext, warn_id):
     try: 
         cur.execute("SELECT `user`,`mod` FROM `warnings` WHERE `id` = ? AND `guild` = ?;", (warn_id,ctx.guild_id))
         u = None
