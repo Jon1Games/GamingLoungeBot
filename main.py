@@ -189,7 +189,7 @@ async def warn(ctx: discord.ApplicationContext, user, reason: str, hours: int, d
 )
 async def list_warns(ctx: discord.ApplicationContext, user, page):
     await recalcRoleWarnCound()
-    wait_embed = discord.Embed(title=f"__**Generating Warning list ...**__", color=0x03f8fc)
+    wait_embed = discord.Embed(title=f"__**generiere Verwarnungs Liste ...**__", color=0x03f8fc)
     msg = await ctx.respond(embed=wait_embed)
     guildmode = False
     now = datetime.now()
@@ -205,8 +205,8 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
     if guildmode == True:
         u = ctx.guild.name
     else: 
-        u = user
-    embed = discord.Embed(title=f"__**Warning list of {u}**__", color=0x03f8fc)
+        u = user.mention
+    embed = discord.Embed(title=f"__**Warning von {u}**__", color=0x03f8fc)
 
     offset = int(page) * 10
 
@@ -220,17 +220,16 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
             if guildmode:
                 if exipire == None:
                     u = await bot.fetch_user(user)
-                    embed.add_field(name=f'**ID: {id}**', value=f'> Nutzer: {u.mention}\n> Moderator: {n}\n> Grund: {reason}',inline=False)
+                    embed.add_field(name=f'**ID: {id}**', value=f'> Nutzer: {u.mention}\n> Moderator: {n.mention}\n> Reason: {reason}',inline=False)
                 else:
                     time = str(exipire)
-                    u = await bot.fetch_user(user)
-                    embed.add_field(name=f'**ID: {id}**', value=f'> Nutzer: {u.mention}\n> Moderator: {n}\n> Grund: {reason}\n> Auslauf Datum: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
+                    embed.add_field(name=f'**ID: {id}**', value=f'> Nutzer: {u.mention}\n> Moderator: {n.mention}\n> Reason: {reason}\n> Expire: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
             else:
                 if exipire == None:
-                    embed.add_field(name=f'**ID: {id}**', value=f'> Moderator: {n}\n> Grund: {reason}',inline=False)
+                    embed.add_field(name=f'**ID: {id}**', value=f'> Moderator: {n.mention}\n> Reason: {reason}',inline=False)
                 else:
                     time = str(exipire)
-                    embed.add_field(name=f'**ID: {id}**', value=f'> Moderator: {n}\n> Grund: {reason}\n> Auslauf Datum: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
+                    embed.add_field(name=f'**ID: {id}**', value=f'> Moderator: {n.mention}\n> Reason: {reason}\n> Expire: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
 
     await msg.edit(embed=embed)
 
