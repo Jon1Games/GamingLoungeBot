@@ -138,18 +138,13 @@ async def ping(ctx: discord.ApplicationContext):
     required=False,
     default='0'
 )
-@discord.option(
-    "months", 
-    required=False,
-    default='0'
-)
 async def warn(ctx: discord.ApplicationContext, user, reason: str, hours: int, days: int, weeks: int, months: int):
     try: 
         if hours == "0" and days == "0" and weeks == "0" and months == "0":
             time = None
         else:
             now = datetime.now()
-            now = now + timedelta(hours=int(hours), days=int(days), weeks=int(weeks), months=int(months))
+            now = now + timedelta(hours=int(hours), days=int(days), weeks=int(weeks))
             time = int(now.strftime("%Y%m%d%H"))
         conn = dbConnect()
         cur = conn.cursor()
