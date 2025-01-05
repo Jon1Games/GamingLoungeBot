@@ -15,36 +15,41 @@ bot = discord.Bot(intents=intents)
 
 load_dotenv()
 
-# Connect to MariaDB Platform
-try:
-    conn = mariadb.connect(
-        user=os.getenv('DB_USER'),
-        password=os.getenv('DB_PASSWORD'),
-        host=os.getenv('DB_HOST'),
-        port=int(os.getenv('DB_PORT')),
-        database=os.getenv('DB_DATABASE')
-    )
-except mariadb.Error as e:
-    print(f"Error connecting to MariaDB Platform: {e}")
-    sys.exit(1)
+def dbConnect():
+    # Connect to MariaDB Platform
+    try:
+        conn = mariadb.connect(
+            user=os.getenv('DB_USER'),
+            password=os.getenv('DB_PASSWORD'),
+            host=os.getenv('DB_HOST'),
+            port=int(os.getenv('DB_PORT')),
+            database=os.getenv('DB_DATABASE')
+        )
+    except mariadb.Error as e:
+        print(f"Error connecting to MariaDB Platform: {e}")
+        sys.exit(1)
 
-# Get Cursor
-cur = conn.cursor()
+    # Get Cursor
+    return conn
 
-# Create Table
-try: 
-    cur.execute("CREATE TABLE IF NOT EXISTS `warnings`(`id` INTEGER AUTO_INCREMENT PRIMARY KEY NOT NULL, `guild` LONG NOT NULL, `user` LONG NOT NULL, `mod` LONG NOT NULL, `exipire` LONG,`reason` VARCHAR(256)) ENGINE = InnoDB;") 
-except mariadb.Error as e: 
-    print(f"Error: {e}")
+def createTables():
+    conn = dbConnect()
+    cur = conn.cursor()
+    # Create Table
+    try: 
+        cur.execute("CREATE TABLE IF NOT EXISTS `warnings`(`id` INTEGER AUTO_INCREMENT PRIMARY KEY NOT NULL, `guild` LONG NOT NULL, `user` LONG NOT NULL, `mod` LONG NOT NULL, `exipire` LONG,`reason` VARCHAR(256)) ENGINE = InnoDB;") 
+    except mariadb.Error as e: 
+        print(f"Error: {e}")
+    conn.close()
 
-def getAllWarnings(guild_id, user_id):
+def getAllWarnings(guild_id, user_id, cur):
     cur.execute("SELECT `id`,`guild`,`user`,`mod`,`reason` FROM `warnings` WHERE (guild=? AND user=?);", (guild_id, user_id))
     i = 0
     for id,guild,user,mod,reason in cur:
         i += 1
     return i
 
-def getWarnings(guild_id, user_id):
+def getWarnings(guild_id, user_id, cur):
     now = datetime.now()
     cur.execute("SELECT `id`,`guild`,`user`,`mod`,`reason` FROM `warnings` WHERE (guild=? AND user=? AND (exipire>? or exipire IS NULL));", (guild_id, user_id, int(now.strftime("%Y%m%d%H"))))
     i = 0
@@ -52,9 +57,9 @@ def getWarnings(guild_id, user_id):
         i += 1
     return i
 
-async def warningRoles(guild: discord.Guild, user: discord.User):
-    all_warnings = getAllWarnings(guild.id, user.id) 
-    warnings = getWarnings(guild.id, user.id)
+async def warningRoles(guild: discord.Guild, user: discord.User, cur):
+    all_warnings = getAllWarnings(guild.id, user.id, cur) 
+    warnings = getWarnings(guild.id, user.id, cur)
 
     if discord.utils.get(guild.roles, name="warned"):
         pass
@@ -66,7 +71,6 @@ async def warningRoles(guild: discord.Guild, user: discord.User):
     else:
         await user.add_roles(role)
 
-    print(str(all_warnings))
     for a in range(1, all_warnings):
         if discord.utils.get(guild.roles, name="warnings: " + str(a)):
             role = discord.utils.get(guild.roles, name="warnings: " + str(a))
@@ -85,11 +89,14 @@ async def warningRoles(guild: discord.Guild, user: discord.User):
 
 @tasks.loop(seconds=3600)
 async def recalcRoleWarnCound():
+    conn = dbConnect()
+    cur = conn.cursor()
     for guild in bot.guilds:
         role = discord.utils.get(guild.roles, name="warned")
         for user in guild.members:
             if role in user.roles:
-                await warningRoles(guild, user)
+                await warningRoles(guild, user, cur)
+    conn.close()
 
 recalcRoleWarnCound.start()
 
@@ -144,14 +151,26 @@ async def warn(ctx: discord.ApplicationContext, user, reason: str, hours: int, d
             now = datetime.now()
             now = now + timedelta(hours=int(hours), days=int(days), weeks=int(weeks), months=int(months))
             time = int(now.strftime("%Y%m%d%H"))
+        conn = dbConnect()
+        cur = conn.cursor()
         cur.execute("INSERT INTO `warnings` (`guild`,`user`,`mod`,`reason`, `exipire`) VALUES (?, ?, ?, ?, ?)", (ctx.guild_id, user.id, ctx.author.id, reason, time)) 
         conn.commit()
-        await ctx.respond("User " + user.name + " warned succesfully.")
 
-        await warningRoles(ctx.guild, user)
+        embed = discord.Embed(title=f"__**Der Nutzer {user.name} wurde erfolgreicht Verwarnt.**__", color=0xAAFF00)
+        if time == None:
+            embed.add_field(name=f'**Informationen:**', value=f'> Nutzer: {user.mention}\n> Grund: {reason}\n> Auslauf Datum:',inline=False)
+        else:
+            time = str(time)
+            embed.add_field(name=f'**Informationen:**', value=f'> Nutzer: {user.mention}\n> Grund: {reason}\n> Auslauf Datum: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
+
+        await ctx.respond(embed=embed)
+
+        await warningRoles(ctx.guild, user, cur)
+        conn.close()
     except mariadb.Error as e: 
         print(f"Error: {e}")
-        await ctx.respond("and error occured, pls contact Jon1Games")
+        embed = discord.Embed(title=f"__**EIn Fehler ist aufgetreten, bitte Kontaktiere Jon1Games*__", color=0xFF0000)
+        await ctx.respond(embed=embed)
 
 @bot.slash_command(name="warns_list")
 @discord.default_permissions(
@@ -174,11 +193,14 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
     msg = await ctx.respond(embed=wait_embed)
     guildmode = False
     now = datetime.now()
+    conn = dbConnect()
+    cur = conn.cursor()
     if user == "":
         cur.execute("SELECT `id`,`guild`,`user`,`mod`,`reason`, `exipire` FROM `warnings` WHERE (guild=? AND (exipire>? or exipire IS NULL));", (ctx.guild_id, int(now.strftime("%Y%m%d%H"))))
         guildmode = True
     else: 
         cur.execute("SELECT `id`,`guild`,`user`,`mod`,`reason`, `exipire` FROM `warnings` WHERE (guild=? AND user=? AND (exipire>? or exipire IS NULL));", (ctx.guild_id, user.id, int(now.strftime("%Y%m%d%H")))) 
+    conn.close()
 
     if guildmode:
         u = ctx.guild.name
@@ -222,19 +244,23 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
 )
 async def warn_remove(ctx: discord.ApplicationContext, warn_id):
     try: 
+        conn = dbConnect()
+        cur = conn.cursor()
         cur.execute("SELECT `user`,`mod` FROM `warnings` WHERE `id` = ? AND `guild` = ?;", (warn_id,ctx.guild_id))
         u = None
         for user,mod in cur:
             u = await ctx.guild.query_members(user_ids=[user]) 
             u = u[0]
-        warns = getWarnings(ctx.guild_id, u.id)
-        cur.execute("DELETE FROM `warnings` WHERE `id` = ? AND `guild` = ?;", (warn_id,ctx.guild_id)) 
+        cur.execute("UPDATE `warnings` SET `exipire` = ? WHERE `id` = ? AND `guild` = ?;", (0,warn_id,ctx.guild_id)) 
         conn.commit()
-        await ctx.respond("The warning with the ID " + warn_id + " was removed.")
+        embed = discord.Embed(title=f"__**Die Verwarnung mit der ID {warn_id} wurde entfernt**__", color=0xAAFF00)
+        await ctx.respond(embed=embed)
 
-        await warningRoles(ctx.guild, u)
+        await warningRoles(ctx.guild, u, cur)
+        conn.close()
     except mariadb.Error as e: 
         print(f"Error: {e}")
-        await ctx.respond("and error occured, pls contact Jon1Games")
+        embed = discord.Embed(title=f"__**EIn Fehler ist aufgetreten, bitte Kontaktiere Jon1Games*__", color=0xFF0000)
+        await ctx.respond(embed=embed)
 
 bot.run(os.getenv('TOKEN'))
