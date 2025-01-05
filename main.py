@@ -183,7 +183,7 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
     if guildmode:
         u = ctx.guild.name
     else: 
-        u = user.mention
+        u = user
     embed = discord.Embed(title=f"__**Warning von {u}**__", color=0x03f8fc)
 
     offset = int(page) * 10
@@ -198,10 +198,10 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
             if guildmode:
                 u = await bot.fetch_user(user)
                 if exipire == None:
-                    embed.add_field(name=f'**ID: {id}**', value=f'> Nutzer: {u}\n> Moderator: {n.mention}\n> Reason: {reason}',inline=False)
+                    embed.add_field(name=f'**ID: {id}**', value=f'> Nutzer: {u.mention}\n> Moderator: {n.mention}\n> Reason: {reason}',inline=False)
                 else:
                     time = str(exipire)
-                    embed.add_field(name=f'**ID: {id}**', value=f'> Nutzer: {u}\n> Moderator: {n.mention}\n> Reason: {reason}\n> Expire: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
+                    embed.add_field(name=f'**ID: {id}**', value=f'> Nutzer: {u.mention}\n> Moderator: {n.mention}\n> Reason: {reason}\n> Expire: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
             else:
                 if exipire == None:
                     embed.add_field(name=f'**ID: {id}**', value=f'> Moderator: {n.mention}\n> Reason: {reason}',inline=False)
