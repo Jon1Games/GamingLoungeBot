@@ -183,7 +183,7 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
     if guildmode == True:
         u = ctx.guild.name
     else: 
-        u = user
+        u = user.mention
     embed = discord.Embed(title=f"__**Warning von {u}**__", color=0x03f8fc)
 
     offset = int(page) * 10
