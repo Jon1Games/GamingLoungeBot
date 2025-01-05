@@ -138,7 +138,6 @@ async def ping(ctx: discord.ApplicationContext):
 )
 async def warn(ctx: discord.ApplicationContext, user, reason: str, hours: int, days: int, weeks: int, months: int):
     try: 
-        warns = getWarnings(ctx.guild_id, user.id)
         if hours == "0" and days == "0" and weeks == "0" and months == "0":
             time = None
         else:
