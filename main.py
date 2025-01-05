@@ -204,10 +204,10 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
                     embed.add_field(name=f'**ID: {id}**', value=f'> {u}\n> Moderator: {n.mention}\n> Reason: {reason}\n> Expire: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
             else:
                 if exipire == None:
-                    embed.add_field(name=f'**ID: {id}**', value=f'> Moderator: {n}\n> Reason: {reason}',inline=False)
+                    embed.add_field(name=f'**ID: {id}**', value=f'> Moderator: {n.mention}\n> Reason: {reason}',inline=False)
                 else:
                     time = str(exipire)
-                    embed.add_field(name=f'**ID: {id}**', value=f'> Moderator: {n}\n> Reason: {reason}\n> Expire: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
+                    embed.add_field(name=f'**ID: {id}**', value=f'> Moderator: {n.mention}\n> Reason: {reason}\n> Expire: {time[0]}{time[1]}{time[2]}{time[3]}/{time[4]}{time[5]}/{time[6]}{time[7]}, {time[8]}{time[9]}:00',inline=False)
 
     await msg.edit(embed=embed)
 
