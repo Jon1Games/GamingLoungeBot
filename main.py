@@ -184,7 +184,7 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
         u = ctx.guild.name
     else: 
         u = user
-    embed = discord.Embed(title=f"__**Warning list of {u}**__", color=0x03f8fc)
+    embed = discord.Embed(title=f"__**Warning von {u}**__", color=0x03f8fc)
 
     offset = int(page) * 10
 
