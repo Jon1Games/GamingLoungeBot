@@ -180,10 +180,11 @@ async def list_warns(ctx: discord.ApplicationContext, user, page):
     else: 
         cur.execute("SELECT `id`,`guild`,`user`,`mod`,`reason`, `exipire` FROM `warnings` WHERE (guild=? AND user=? AND (exipire>? or exipire IS NULL));", (ctx.guild_id, user.id, int(now.strftime("%Y%m%d%H")))) 
 
-    if guildmode == True:
+    if guildmode:
         u = ctx.guild.name
     else: 
-        u = user.mention
+        u = await bot.fetch_user(user)
+        u = u.mention
     embed = discord.Embed(title=f"__**Warning von {u}**__", color=0x03f8fc)
 
     offset = int(page) * 10
