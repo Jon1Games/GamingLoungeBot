@@ -1,4 +1,2 @@
 py-cord[voice]
 python-dotenv
-mariadb
-table2ascii
